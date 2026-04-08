@@ -5,11 +5,11 @@
 Doplňte název aplikace.
 
 ## Členové týmu
-- Jméno 1
-- Jméno 2
+- Dominika
+
 
 ## Téma aplikace
-Stručně napište, co bude vaše aplikace dělat.
+Jednoduchý kvíz
 
 ## Cílový uživatel
 Pro koho je aplikace určená?
