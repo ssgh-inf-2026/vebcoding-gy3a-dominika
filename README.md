@@ -12,12 +12,12 @@ Doplňte název aplikace.
 Jednoduchý kvíz
 
 ## Cílový uživatel
-Pro koho je aplikace určená?
+Pro studenty
 
 ## 3 plánované funkce
-1. Doplňte
-2. Doplňte
-3. Doplňte
+1. Generovt náhodné otázky
+2. Opravit kíz
+3. Vyhodnotit
 
 ## Průběh práce
 
