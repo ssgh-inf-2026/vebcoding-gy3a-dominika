@@ -1,51 +1,206 @@
 <!DOCTYPE html>
 <html lang="cs">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Student quiz</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Školní Kvízovač</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .option-btn {
+            transition: all 0.2s ease;
+            border: 2px solid #e2e8f0;
+        }
+
+        .option-btn:hover {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+            transform: translateY(-2px);
+        }
+
+        .option-btn.selected {
+            border-color: #3b82f6;
+            background-color: #3b82f6;
+            color: white;
+        }
+
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
 </head>
-<body>
-  <header>
-    <h1>Student quiz</h1>
-    <p class="subtitle">Toto je startovní šablona projektu pro GitHub Classroom.</p>
-  </header>
+<body class="p-4 md:p-8">
+    <div class="max-w-2xl mx-auto">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-slate-800 mb-2">Chytrý Kvízovač 🎓</h1>
+            <p class="text-slate-600">Zadej téma a procvič si své znalosti!</p>
+        </header>
 
-  <main class="container">
-    <section class="card">
-      <h2>O projektu</h2>
-      <p>
-        Tuto šablonu si upravte podle svého tématu. Změňte nadpis, texty,
-        vstupy, tlačítka i funkce tak, aby odpovídaly vaší vlastní aplikaci.
-      </p>
-    </section>
+        <!-- Input Section -->
+        <div class="glass-card p-6 mb-6">
+            <div class="flex flex-col gap-4">
+                <label for="userInput" class="font-semibold text-slate-700">Na jaké téma chceš otázky?</label>
+                <input 
+                    type="text" 
+                    id="userInput" 
+                    placeholder="Např. První světová válka, Fotosyntéza, Funkce v Pythonu..." 
+                    class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                >
+                <button 
+                    id="testButton" 
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl transition-colors shadow-lg active:transform active:scale-95"
+                >
+                    Generovat kvíz
+                </button>
+            </div>
+        </div>
 
-    <section class="card">
-      <h2>Testovací část</h2>
-      <label for="userInput">Zadej libovolný text:</label>
-      <input type="text" id="userInput" placeholder="Sem napiš text">
+        <!-- Result / Quiz Area -->
+        <div id="result" class="glass-card p-6 min-h-[100px] flex flex-col justify-center items-center text-center">
+            <p class="text-slate-500 italic">Zatím nebyl vygenerován žádný test.</p>
+        </div>
+    </div>
 
-      <button id="testButton">Vyzkoušet</button>
+    <script type="module">
+        const apiKey = ""; // API key is handled by the environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'school-quiz-app';
 
-      <p id="result">Zde se zobrazí výsledek.</p>
-    </section>
+        const userInput = document.getElementById('userInput');
+        const testButton = document.getElementById('testButton');
+        const resultArea = document.getElementById('result');
 
-    <section class="card">
-      <h2>Co bude potřeba změnit</h2>
-      <ul>
-        <li>upravte název aplikace,</li>
-        <li>doplňte vlastní obsah,</li>
-        <li>vytvořte vlastní funkci v JavaScriptu,</li>
-        <li>upravte vzhled podle svého projektu.</li>
-      </ul>
-    </section>
-  </main>
+        let currentQuiz = null;
 
-  <footer>
-    <p>Projekt vytvořen v rámci výuky – vibe coding.</p>
-  </footer>
+        testButton.addEventListener('click', generateQuiz);
 
-  <script src="script.js"></script>
+        async function generateQuiz() {
+            const topic = userInput.value.trim();
+            if (!topic) {
+                showError("Prosím, zadej nejdříve téma.");
+                return;
+            }
+
+            setLoading(true);
+
+            const systemPrompt = "Jsi učitel, který generuje kvízové otázky pro studenty. Vygeneruj 1 otázku k zadanému tématu ve formátu JSON. JSON musí obsahovat: 'question' (text otázky), 'options' (pole 4 možností), 'correctIndex' (index správné odpovědi 0-3) a 'explanation' (krátké vysvětlení proč je to tak správně). Odpovídej pouze platným JSONem v češtině.";
+
+            try {
+                const response = await fetchWithRetry(
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: `Téma: ${topic}` }] }],
+                            systemInstruction: { parts: [{ text: systemPrompt }] },
+                            generationConfig: { responseMimeType: "application/json" }
+                        })
+                    }
+                );
+
+                const data = await response.json();
+                const quizData = JSON.parse(data.candidates[0].content.parts[0].text);
+                renderQuiz(quizData);
+            } catch (error) {
+                showError("Nepodařilo se vygenerovat otázku. Zkus to prosím znovu.");
+                console.error(error);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        async function fetchWithRetry(url, options, retries = 5, backoff = 1000) {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const res = await fetch(url, options);
+                    if (res.ok) return res;
+                } catch (err) {}
+                await new Promise(resolve => setTimeout(resolve, backoff));
+                backoff *= 2;
+            }
+            throw new Error("Všechny pokusy o připojení selhaly.");
+        }
+
+        function setLoading(isLoading) {
+            if (isLoading) {
+                testButton.disabled = true;
+                testButton.innerHTML = `<span class="loader mr-2"></span> Generuji...`;
+                resultArea.innerHTML = `<div class="p-8 text-blue-600 font-semibold text-lg">Hledám ty nejlepší otázky...</div>`;
+            } else {
+                testButton.disabled = false;
+                testButton.innerText = "Generovat kvíz";
+            }
+        }
+
+        function renderQuiz(data) {
+            currentQuiz = data;
+            resultArea.innerHTML = `
+                <div class="w-full text-left animate-fade-in">
+                    <h2 class="text-xl font-bold text-slate-800 mb-6">${data.question}</h2>
+                    <div class="grid gap-3">
+                        ${data.options.map((opt, i) => `
+                            <button class="option-btn p-4 rounded-xl text-left font-medium" onclick="window.checkAnswer(${i})">
+                                ${String.fromCharCode(65 + i)}) ${opt}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        window.checkAnswer = (index) => {
+            const buttons = resultArea.querySelectorAll('.option-btn');
+            const correct = currentQuiz.correctIndex;
+
+            buttons.forEach((btn, i) => {
+                btn.disabled = true;
+                if (i === correct) {
+                    btn.classList.add('bg-green-100', 'border-green-500', 'text-green-800');
+                } else if (i === index) {
+                    btn.classList.add('bg-red-100', 'border-red-500', 'text-red-800');
+                }
+            });
+
+            const feedback = document.createElement('div');
+            feedback.className = `mt-6 p-4 rounded-xl text-left ${index === correct ? 'bg-green-50 text-green-700' : 'bg-orange-50 text-orange-700'}`;
+            feedback.innerHTML = `
+                <p class="font-bold mb-1">${index === correct ? '✅ Správně!' : '❌ Tentokrát ne.'}</p>
+                <p class="text-sm">${currentQuiz.explanation}</p>
+                <button onclick="location.reload()" class="mt-4 text-blue-600 underline font-semibold">Zkusit jiné téma</button>
+            `;
+            resultArea.appendChild(feedback);
+        };
+
+        function showError(msg) {
+            resultArea.innerHTML = `<p class="text-red-500 font-semibold">${msg}</p>`;
+        }
+    </script>
 </body>
 </html>
