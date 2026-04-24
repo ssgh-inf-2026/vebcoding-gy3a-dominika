@@ -3,204 +3,244 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Školní Kvízovač</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>BioMaster - Středoškolská Biologie</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-        
+        :root {
+            --primary: #2d6a4f;
+            --secondary: #52b788;
+            --accent: #d8f3dc;
+            --text: #1b4332;
+            --error: #e76f51;
+            --success: #80b918;
+        }
+
         body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             min-height: 100vh;
         }
 
-        .glass-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 1.5rem;
+        #app {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 600px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
         }
 
-        .option-btn {
-            transition: all 0.2s ease;
-            border: 2px solid #e2e8f0;
+        h1 { color: var(--primary); margin-bottom: 0.5rem; }
+        .stats { font-size: 0.9rem; margin-bottom: 1rem; color: #666; }
+
+        .question-container {
+            margin: 2rem 0;
+            min-height: 150px;
         }
 
-        .option-btn:hover {
-            border-color: #3b82f6;
-            background-color: #eff6ff;
-            transform: translateY(-2px);
+        .options-grid {
+            display: grid;
+            gap: 10px;
+            grid-template-columns: 1fr 1fr;
         }
 
-        .option-btn.selected {
-            border-color: #3b82f6;
-            background-color: #3b82f6;
+        button {
+            padding: 12px 15px;
+            border: 2px solid var(--secondary);
+            background: white;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+
+        button:hover {
+            background: var(--accent);
+        }
+
+        button.correct {
+            background: var(--success) !important;
             color: white;
+            border-color: var(--success);
         }
 
-        .loader {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #3498db;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            vertical-align: middle;
+        button.wrong {
+            background: var(--error) !important;
+            color: white;
+            border-color: var(--error);
         }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        #next-btn {
+            margin-top: 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 30px;
+            display: none;
+        }
+
+        .category-badge {
+            background: var(--accent);
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        #image-placeholder {
+            width: 100%;
+            height: 150px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
         }
     </style>
 </head>
-<body class="p-4 md:p-8">
-    <div class="max-w-2xl mx-auto">
-        <!-- Header -->
-        <header class="text-center mb-8">
-            <h1 class="text-4xl font-bold text-slate-800 mb-2">Chytrý Kvízovač 🎓</h1>
-            <p class="text-slate-600">Zadej téma a procvič si své znalosti!</p>
-        </header>
+<body>
 
-        <!-- Input Section -->
-        <div class="glass-card p-6 mb-6">
-            <div class="flex flex-col gap-4">
-                <label for="userInput" class="font-semibold text-slate-700">Na jaké téma chceš otázky?</label>
-                <input 
-                    type="text" 
-                    id="userInput" 
-                    placeholder="Např. První světová válka, Fotosyntéza, Funkce v Pythonu..." 
-                    class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-                >
-                <button 
-                    id="testButton" 
-                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl transition-colors shadow-lg active:transform active:scale-95"
-                >
-                    Generovat kvíz
-                </button>
+<div id="app">
+    <span class="category-badge" id="category">Biologie</span>
+    <h1 id="title">BioKvíz</h1>
+    <div class="stats">Otázka: <span id="q-count">0</span>/100 | Skóre: <span id="score">0</span></div>
+    
+    <div id="image-placeholder">🧬</div>
+
+    <div class="question-container">
+        <h3 id="question-text">Načítání otázky...</h3>
+        <div class="options-grid" id="options">
             </div>
-        </div>
-
-        <!-- Result / Quiz Area -->
-        <div id="result" class="glass-card p-6 min-h-[100px] flex flex-col justify-center items-center text-center">
-            <p class="text-slate-500 italic">Zatím nebyl vygenerován žádný test.</p>
-        </div>
     </div>
 
-    <script type="module">
-        const apiKey = ""; // API key is handled by the environment
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'school-quiz-app';
+    <button id="next-btn" onclick="nextQuestion()">Další otázka</button>
+</div>
 
-        const userInput = document.getElementById('userInput');
-        const testButton = document.getElementById('testButton');
-        const resultArea = document.getElementById('result');
+<script>
+    const questions = [
+        {
+            q: "Která organela je zodpovědná za buněčné dýchání a výrobu ATP?",
+            a: ["Ribozom", "Mitochondrie", "Golgiho aparát", "Lysozom"],
+            correct: 1,
+            cat: "Cytologie",
+            icon: "🔋"
+        },
+        {
+            q: "Jak se nazývá proces dělení jádra somatických buněk?",
+            a: ["Meióza", "Fragmentace", "Mitóza", "Pučení"],
+            correct: 2,
+            cat: "Cytologie",
+            icon: "✂️"
+        },
+        {
+            q: "Který vědec je považován za zakladatele genetiky?",
+            a: ["Charles Darwin", "J. G. Mendel", "Louis Pasteur", "Jan Janský"],
+            correct: 1,
+            cat: "Genetika",
+            icon: "🌱"
+        },
+        {
+            q: "Kolik chromozomů má zdravá lidská tělní buňka?",
+            a: ["23", "48", "44", "46"],
+            correct: 3,
+            cat: "Biologie člověka",
+            icon: "🧬"
+        },
+        {
+            q: "Která céva vede okysličenou krev ze srdce do těla?",
+            a: ["Aorta", "Plicnice", "Horní dutá žíla", "Vlásečnice"],
+            correct: 0,
+            cat: "Biologie člověka",
+            icon: "❤️"
+        },
+        {
+            q: "Který plyn je hlavním produktem fotosyntézy?",
+            a: ["Oxid uhličitý", "Dusík", "Kyslík", "Vodík"],
+            correct: 2,
+            cat: "Botanika",
+            icon: "🍃"
+        }
+        // Zde můžeš přidat dalších 94 otázek podle stejného vzoru...
+    ];
 
-        let currentQuiz = null;
+    let currentQuestionIndex = 0;
+    let score = 0;
 
-        testButton.addEventListener('click', generateQuiz);
+    const qText = document.getElementById('question-text');
+    const optionsBox = document.getElementById('options');
+    const nextBtn = document.getElementById('next-btn');
+    const scoreText = document.getElementById('score');
+    const countText = document.getElementById('q-count');
+    const categoryTag = document.getElementById('category');
+    const iconBox = document.getElementById('image-placeholder');
 
-        async function generateQuiz() {
-            const topic = userInput.value.trim();
-            if (!topic) {
-                showError("Prosím, zadej nejdříve téma.");
-                return;
-            }
+    function loadQuestion() {
+        const q = questions[currentQuestionIndex];
+        qText.innerText = q.q;
+        categoryTag.innerText = q.cat;
+        iconBox.innerText = q.icon;
+        optionsBox.innerHTML = '';
+        nextBtn.style.display = 'none';
 
-            setLoading(true);
+        q.a.forEach((option, index) => {
+            const btn = document.createElement('button');
+            btn.innerText = option;
+            btn.onclick = () => checkAnswer(index, btn);
+            optionsBox.appendChild(btn);
+        });
 
-            const systemPrompt = "Jsi učitel, který generuje kvízové otázky pro studenty. Vygeneruj 1 otázku k zadanému tématu ve formátu JSON. JSON musí obsahovat: 'question' (text otázky), 'options' (pole 4 možností), 'correctIndex' (index správné odpovědi 0-3) a 'explanation' (krátké vysvětlení proč je to tak správně). Odpovídej pouze platným JSONem v češtině.";
+        countText.innerText = currentQuestionIndex + 1;
+    }
 
-            try {
-                const response = await fetchWithRetry(
-                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`,
-                    {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contents: [{ parts: [{ text: `Téma: ${topic}` }] }],
-                            systemInstruction: { parts: [{ text: systemPrompt }] },
-                            generationConfig: { responseMimeType: "application/json" }
-                        })
-                    }
-                );
+    function checkAnswer(selected, btn) {
+        const correct = questions[currentQuestionIndex].correct;
+        const allButtons = optionsBox.querySelectorAll('button');
 
-                const data = await response.json();
-                const quizData = JSON.parse(data.candidates[0].content.parts[0].text);
-                renderQuiz(quizData);
-            } catch (error) {
-                showError("Nepodařilo se vygenerovat otázku. Zkus to prosím znovu.");
-                console.error(error);
-            } finally {
-                setLoading(false);
-            }
+        if (selected === correct) {
+            btn.classList.add('correct');
+            score++;
+            scoreText.innerText = score;
+        } else {
+            btn.classList.add('wrong');
+            allButtons[correct].classList.add('correct');
         }
 
-        async function fetchWithRetry(url, options, retries = 5, backoff = 1000) {
-            for (let i = 0; i < retries; i++) {
-                try {
-                    const res = await fetch(url, options);
-                    if (res.ok) return res;
-                } catch (err) {}
-                await new Promise(resolve => setTimeout(resolve, backoff));
-                backoff *= 2;
-            }
-            throw new Error("Všechny pokusy o připojení selhaly.");
+        allButtons.forEach(b => b.disabled = true);
+        nextBtn.style.display = 'inline-block';
+    }
+
+    function nextQuestion() {
+        currentQuestionIndex++;
+        if (currentQuestionIndex < questions.length) {
+            loadQuestion();
+        } else {
+            showResult();
         }
+    }
 
-        function setLoading(isLoading) {
-            if (isLoading) {
-                testButton.disabled = true;
-                testButton.innerHTML = `<span class="loader mr-2"></span> Generuji...`;
-                resultArea.innerHTML = `<div class="p-8 text-blue-600 font-semibold text-lg">Hledám ty nejlepší otázky...</div>`;
-            } else {
-                testButton.disabled = false;
-                testButton.innerText = "Generovat kvíz";
-            }
-        }
+    function showResult() {
+        document.querySelector('.question-container').innerHTML = `
+            <h2>Konec kvízu!</h2>
+            <p>Tvé výsledné skóre je ${score} z ${questions.length}.</p>
+            <button onclick="location.reload()">Zkusit znovu</button>
+        `;
+        nextBtn.style.display = 'none';
+    }
 
-        function renderQuiz(data) {
-            currentQuiz = data;
-            resultArea.innerHTML = `
-                <div class="w-full text-left animate-fade-in">
-                    <h2 class="text-xl font-bold text-slate-800 mb-6">${data.question}</h2>
-                    <div class="grid gap-3">
-                        ${data.options.map((opt, i) => `
-                            <button class="option-btn p-4 rounded-xl text-left font-medium" onclick="window.checkAnswer(${i})">
-                                ${String.fromCharCode(65 + i)}) ${opt}
-                            </button>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-        }
+    // Inicializace
+    loadQuestion();
+</script>
 
-        window.checkAnswer = (index) => {
-            const buttons = resultArea.querySelectorAll('.option-btn');
-            const correct = currentQuiz.correctIndex;
-
-            buttons.forEach((btn, i) => {
-                btn.disabled = true;
-                if (i === correct) {
-                    btn.classList.add('bg-green-100', 'border-green-500', 'text-green-800');
-                } else if (i === index) {
-                    btn.classList.add('bg-red-100', 'border-red-500', 'text-red-800');
-                }
-            });
-
-            const feedback = document.createElement('div');
-            feedback.className = `mt-6 p-4 rounded-xl text-left ${index === correct ? 'bg-green-50 text-green-700' : 'bg-orange-50 text-orange-700'}`;
-            feedback.innerHTML = `
-                <p class="font-bold mb-1">${index === correct ? '✅ Správně!' : '❌ Tentokrát ne.'}</p>
-                <p class="text-sm">${currentQuiz.explanation}</p>
-                <button onclick="location.reload()" class="mt-4 text-blue-600 underline font-semibold">Zkusit jiné téma</button>
-            `;
-            resultArea.appendChild(feedback);
-        };
-
-        function showError(msg) {
-            resultArea.innerHTML = `<p class="text-red-500 font-semibold">${msg}</p>`;
-        }
-    <script src="script.js"></script>
 </body>
 </html>
