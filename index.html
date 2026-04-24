@@ -13,11 +13,12 @@
             --text: #1b4332;
             --error: #e76f51;
             --success: #80b918;
+            --bg: #f0fdf4;
         }
 
         body {
             font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            background: linear-gradient(135deg, var(--bg) 0%, #dcfce7 100%);
             color: var(--text);
             margin: 0;
             display: flex;
@@ -29,41 +30,69 @@
         #app {
             background: white;
             padding: 2rem;
-            border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-radius: 25px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
             width: 90%;
-            max-width: 600px;
+            max-width: 650px;
             text-align: center;
-            position: relative;
-            overflow: hidden;
+            transition: transform 0.3s ease;
         }
 
-        h1 { color: var(--primary); margin-bottom: 0.5rem; }
-        .stats { font-size: 0.9rem; margin-bottom: 1rem; color: #666; }
-
-        .question-container {
-            margin: 2rem 0;
-            min-height: 150px;
+        .category-badge {
+            background: var(--accent);
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
+
+        .stats {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: #555;
+            display: flex;
+            justify-content: space-around;
+        }
+
+        #image-placeholder {
+            font-size: 4rem;
+            margin: 20px 0;
+            background: #f8f9fa;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 20px;
+        }
+
+        h3 { margin: 1.5rem 0; line-height: 1.4; min-height: 60px; }
 
         .options-grid {
             display: grid;
-            gap: 10px;
+            gap: 12px;
             grid-template-columns: 1fr 1fr;
         }
 
-        button {
-            padding: 12px 15px;
-            border: 2px solid var(--secondary);
-            background: white;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 1rem;
-            font-family: inherit;
+        @media (max-width: 480px) {
+            .options-grid { grid-template-columns: 1fr; }
         }
 
-        button:hover {
+        button {
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+            font-family: inherit;
+            font-weight: 500;
+        }
+
+        button:hover:not(:disabled) {
+            border-color: var(--secondary);
             background: var(--accent);
         }
 
@@ -80,167 +109,41 @@
         }
 
         #next-btn {
-            margin-top: 20px;
+            margin-top: 25px;
             background: var(--primary);
             color: white;
             border: none;
-            padding: 10px 30px;
-            display: none;
-        }
-
-        .category-badge {
-            background: var(--accent);
-            padding: 4px 12px;
-            border-radius: 15px;
-            font-size: 0.8rem;
+            padding: 12px 40px;
+            border-radius: 30px;
             font-weight: 600;
+            display: none;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(45, 106, 79, 0.3);
         }
 
-        #image-placeholder {
-            width: 100%;
-            height: 150px;
-            background: #f8f9fa;
-            border-radius: 15px;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 3rem;
-        }
+        #next-btn:hover { background: #1b4332; }
     </style>
 </head>
 <body>
 
 <div id="app">
-    <span class="category-badge" id="category">Biologie</span>
-    <h1 id="title">BioKvíz</h1>
-    <div class="stats">Otázka: <span id="q-count">0</span>/100 | Skóre: <span id="score">0</span></div>
+    <span class="category-badge" id="category">Načítání...</span>
+    
+    <div class="stats">
+        <div>Otázka: <strong id="q-count">0</strong> / 100</div>
+        <div>Skóre: <strong id="score">0</strong></div>
+    </div>
     
     <div id="image-placeholder">🧬</div>
 
-    <div class="question-container">
-        <h3 id="question-text">Načítání otázky...</h3>
-        <div class="options-grid" id="options">
-            </div>
+    <div id="quiz-content">
+        <h3 id="question-text">Připravte se, kvíz začíná...</h3>
+        <div class="options-grid" id="options"></div>
     </div>
 
-    <button id="next-btn" onclick="nextQuestion()">Další otázka</button>
+    <button id="next-btn">Další otázka →</button>
 </div>
 
-<script>
-    const questions = [
-        {
-            q: "Která organela je zodpovědná za buněčné dýchání a výrobu ATP?",
-            a: ["Ribozom", "Mitochondrie", "Golgiho aparát", "Lysozom"],
-            correct: 1,
-            cat: "Cytologie",
-            icon: "🔋"
-        },
-        {
-            q: "Jak se nazývá proces dělení jádra somatických buněk?",
-            a: ["Meióza", "Fragmentace", "Mitóza", "Pučení"],
-            correct: 2,
-            cat: "Cytologie",
-            icon: "✂️"
-        },
-        {
-            q: "Který vědec je považován za zakladatele genetiky?",
-            a: ["Charles Darwin", "J. G. Mendel", "Louis Pasteur", "Jan Janský"],
-            correct: 1,
-            cat: "Genetika",
-            icon: "🌱"
-        },
-        {
-            q: "Kolik chromozomů má zdravá lidská tělní buňka?",
-            a: ["23", "48", "44", "46"],
-            correct: 3,
-            cat: "Biologie člověka",
-            icon: "🧬"
-        },
-        {
-            q: "Která céva vede okysličenou krev ze srdce do těla?",
-            a: ["Aorta", "Plicnice", "Horní dutá žíla", "Vlásečnice"],
-            correct: 0,
-            cat: "Biologie člověka",
-            icon: "❤️"
-        },
-        {
-            q: "Který plyn je hlavním produktem fotosyntézy?",
-            a: ["Oxid uhličitý", "Dusík", "Kyslík", "Vodík"],
-            correct: 2,
-            cat: "Botanika",
-            icon: "🍃"
-        }
-        // Zde můžeš přidat dalších 94 otázek podle stejného vzoru...
-    ];
-
-    let currentQuestionIndex = 0;
-    let score = 0;
-
-    const qText = document.getElementById('question-text');
-    const optionsBox = document.getElementById('options');
-    const nextBtn = document.getElementById('next-btn');
-    const scoreText = document.getElementById('score');
-    const countText = document.getElementById('q-count');
-    const categoryTag = document.getElementById('category');
-    const iconBox = document.getElementById('image-placeholder');
-
-    function loadQuestion() {
-        const q = questions[currentQuestionIndex];
-        qText.innerText = q.q;
-        categoryTag.innerText = q.cat;
-        iconBox.innerText = q.icon;
-        optionsBox.innerHTML = '';
-        nextBtn.style.display = 'none';
-
-        q.a.forEach((option, index) => {
-            const btn = document.createElement('button');
-            btn.innerText = option;
-            btn.onclick = () => checkAnswer(index, btn);
-            optionsBox.appendChild(btn);
-        });
-
-        countText.innerText = currentQuestionIndex + 1;
-    }
-
-    function checkAnswer(selected, btn) {
-        const correct = questions[currentQuestionIndex].correct;
-        const allButtons = optionsBox.querySelectorAll('button');
-
-        if (selected === correct) {
-            btn.classList.add('correct');
-            score++;
-            scoreText.innerText = score;
-        } else {
-            btn.classList.add('wrong');
-            allButtons[correct].classList.add('correct');
-        }
-
-        allButtons.forEach(b => b.disabled = true);
-        nextBtn.style.display = 'inline-block';
-    }
-
-    function nextQuestion() {
-        currentQuestionIndex++;
-        if (currentQuestionIndex < questions.length) {
-            loadQuestion();
-        } else {
-            showResult();
-        }
-    }
-
-    function showResult() {
-        document.querySelector('.question-container').innerHTML = `
-            <h2>Konec kvízu!</h2>
-            <p>Tvé výsledné skóre je ${score} z ${questions.length}.</p>
-            <button onclick="location.reload()">Zkusit znovu</button>
-        `;
-        nextBtn.style.display = 'none';
-    }
-
-    // Inicializace
-    loadQuestion();
-</script>
-
+<script src="script.js"></script>
 </body>
 </html>
